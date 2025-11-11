@@ -275,8 +275,10 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
+                    console.log('文件数据：', data);
+                    console.log('顶层键：', Object.keys(data));
                     renderOutput(data);
-                    messageDiv.innerHTML = `<div class="success">✓ 文件上传成功！</div>`;
+                    messageDiv.innerHTML = `<div class="success">✓ 文件上传成功！检查Console了吗？</div>`;
                 } catch (error) {
                     messageDiv.innerHTML = `<div class="error">❌ JSON格式有问题：${error.message}</div>`;
                 }
