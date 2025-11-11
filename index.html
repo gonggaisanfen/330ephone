@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude & Lune 对话解析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-parse {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-parse:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .output-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .output-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .output-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message.claude {
+            background: #e8f0ff;
+            border-left: 4px solid #667eea;
+        }
+
+        .message.lune {
+            background: #fff0f5;
+            border-left: 4px solid #d946ef;
+        }
+
+        .message-speaker {
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .message-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #c33;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #666;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💫 Lune & Claude</h1>
+            <p>对话解析工具 — 简单又傻瓜</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <label>选择方式：</label>
+                
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <button class="btn-parse" style="flex: 1;" onclick="document.getElementById('fileInput').click()">📁 上传JSON文件</button>
+                    <button class="btn-clear" style="flex: 1;" onclick="togglePaste()">📋 粘贴JSON</button>
+                </div>
+
+                <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileUpload(event)">
+
+                <div id="pasteSection" style="display: none;">
+                    <label for="jsonInput">粘贴你的对话JSON：</label>
+                    <textarea id="jsonInput" placeholder="把你导出的JSON数据粘贴到这里..."></textarea>
+                    <div class="button-group">
+                        <button class="btn-parse" onclick="parseChat()">✨ 解析对话</button>
+                    </div>
+                </div>
+
+                <div id="message"></div>
+            </div>
+
+            <div class="output-section" id="outputSection">
+                <div class="stats" id="stats"></div>
+                <div id="output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePaste() {
+            const pasteSection = document.getElementById('pasteSection');
+            pasteSection.style.display = pasteSection.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const messageDiv = document.getElementById('message');
+
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    renderOutput(data);
+                    messageDiv.innerHTML = `<div class="success">✓ 文件上传成功！已解析 ${data.messages?.length || 0} 条消息</div>`;
+                } catch (error) {
+                    messageDiv.innerHTML = `<div class="error">❌ 文件格式有问题：${error.message}</div>`;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseChat() {
+            const input = document.getElementById('jsonInput').value.trim();
+            const messageDiv = document.getElementById('message');
+
+            if (!input) {
+                messageDiv.innerHTML = '<div class="error">请先粘贴JSON数据啦～</div>';
+                return;
+            }
+
+            try {
+                const data = JSON.parse(input);
+                renderOutput(data);
+                messageDiv.innerHTML = '<div class="success">✓ 解析成功！</div>';
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="error">❌ JSON格式有问题：${error.message}</div>`;
+            }
+        }
+
+        function renderOutput(data) {
+            const outputSection = document.getElementById('outputSection');
+            const output = document.getElementById('output');
+            const statsDiv = document.getElementById('stats');
+
+            let conversation = [];
+            let memory = [];
+            let userPreferences = '';
+
+            // 处理不同的JSON结构
+            if (data.messages) {
+                conversation = data.messages.map(msg => ({
+                    speaker: msg.role === 'user' ? 'Lune' : 'Claude',
+                    content: msg.content || ''
+                }));
+            }
+
+            if (data.memory) {
+                memory = Array.isArray(data.memory) ? data.memory : [];
+            }
+
+            if (data.userPreferences) {
+                userPreferences = data.userPreferences;
+            }
+
+            // 统计信息
+            const totalMessages = conversation.length;
+            const claudeMessages = conversation.filter(m => m.speaker === 'Claude').length;
+            const luneMessages = conversation.filter(m => m.speaker === 'Lune').length;
+
+            statsDiv.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${totalMessages}</div>
+                    <div class="stat-label">总消息数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${claudeMessages}</div>
+                    <div class="stat-label">Claude</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${luneMessages}</div>
+                    <div class="stat-label">Lune</div>
+                </div>
+            `;
+
+            // 渲染对话
+            let html = '';
+
+            if (userPreferences) {
+                html += `<div style="margin-bottom: 20px; padding: 15px; background: #f0f5ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <div style="font-weight: 700; margin-bottom: 10px; color: #333;">🎭 用户预设</div>
+                    <div style="font-size: 13px; color: #666; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(userPreferences)}</div>
+                </div>`;
+            }
+
+            if (memory.length > 0) {
+                html += `<div style="margin-bottom: 20px; padding: 15px; background: #f5f0ff; border-radius: 8px; border-left: 4px solid #a855f7;">
+                    <div style="font-weight: 700; margin-bottom: 10px; color: #333;">🧠 记忆</div>
+                    <div style="font-size: 13px; color: #666;">`;
+                memory.forEach((mem, i) => {
+                    html += `<div style="margin-bottom: 8px;">• ${escapeHtml(mem)}</div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            html += '<div style="margin-top: 30px;"><div style="font-weight: 700; margin-bottom: 15px; color: #333;">💬 对话</div>';
+
+            conversation.forEach((msg, i) => {
+                const className = msg.speaker === 'Claude' ? 'claude' : 'lune';
+                const emoji = msg.speaker === 'Claude' ? '👨‍💻' : '👤';
+                html += `
+                    <div class="message ${className}">
+                        <div class="message-speaker">${emoji} ${msg.speaker}</div>
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            output.innerHTML = html;
+            outputSection.classList.add('active');
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function clearAll() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('outputSection').classList.remove('active');
+            document.getElementById('pasteSection').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
