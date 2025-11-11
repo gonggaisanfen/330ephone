@@ -1,4 +1,17 @@
-<!DOCTYPE html>
+// 提取对话 - 支持多种格式
+            let historyData = data.chatData?.history || data.history || [];
+            if (Array.isArray(historyData)) {
+                conversation = historyData
+                    .filter(msg => msg.role !== 'system' || !msg.isHidden)
+                    .map(msg => ({
+                        role: msg.role || 'unknown',
+                        senderName: msg.senderName || (msg.role === 'user' ? 'Lune' : msg.role === 'assistant' ? 'Claude' : 'System'),
+                        content: msg.content || '',
+                        timestamp: msg.timestamp,
+                        type: msg.type || 'text',
+                        isHidden: msg.isHidden || false
+                    }));
+            }<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
