@@ -15,12 +15,3 @@
   "include": ["*.ts"],
   "exclude": ["node_modules"]
 }
-```
-
-`.gitignore`：
-```
-node_modules/
-dist/
-.env
-*.log
-parsed_output.txt
