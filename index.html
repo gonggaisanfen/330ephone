@@ -313,10 +313,12 @@
             let settings = {};
             let memory = [];
 
-            // 提取设置
-            if (data.settings) {
-                settings = data.settings;
+            // 如果data是数组，取第一个元素
+            if (Array.isArray(data)) {
+                data = data[0] || {};
             }
+
+            console.log('处理后的数据：', data);
 
             // 提取对话
             if (data.history && Array.isArray(data.history)) {
