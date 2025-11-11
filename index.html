@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude & Lune 对话解析</title>
+    <title>Lune & Claude 对话解析</title>
     <style>
         * {
             margin: 0;
@@ -25,7 +25,7 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1000px;
+            max-width: 1200px;
             width: 100%;
             overflow: hidden;
         }
@@ -53,31 +53,6 @@
 
         .input-section {
             margin-bottom: 30px;
-        }
-
-        .input-section label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 12px;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
         }
 
         .button-group {
@@ -116,6 +91,10 @@
             background: #e0e0e0;
         }
 
+        input[type="file"] {
+            display: none;
+        }
+
         .output-section {
             display: none;
             animation: fadeIn 0.3s ease-in;
@@ -136,22 +115,61 @@
             }
         }
 
-        .output-content {
-            background: #f9f9f9;
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
             padding: 20px;
             border-radius: 8px;
+            text-align: center;
             border-left: 4px solid #667eea;
-            max-height: 600px;
-            overflow-y: auto;
-            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
             font-size: 13px;
+            color: #666;
             line-height: 1.6;
-            white-space: pre-wrap;
-            word-break: break-word;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        .conversation-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
         }
 
         .message {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding: 15px;
             border-radius: 8px;
             animation: slideIn 0.3s ease-out;
@@ -178,17 +196,32 @@
             border-left: 4px solid #d946ef;
         }
 
+        .message.system {
+            background: #f0f0f0;
+            border-left: 4px solid #999;
+        }
+
         .message-speaker {
             font-weight: 700;
             margin-bottom: 8px;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            color: #333;
         }
 
         .message-content {
             font-size: 14px;
             line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
         }
 
         .error {
@@ -205,60 +238,22 @@
             font-size: 13px;
             margin-top: 10px;
         }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>💫 Lune & Claude</h1>
-            <p>对话解析工具 — 简单又傻瓜</p>
+            <p>对话解析工具 — 傻瓜版</p>
         </div>
 
         <div class="content">
             <div class="input-section">
-                <label>选择方式：</label>
-                
-                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                    <button class="btn-parse" style="flex: 1;" onclick="document.getElementById('fileInput').click()">📁 上传JSON文件</button>
-                    <button class="btn-clear" style="flex: 1;" onclick="togglePaste()">📋 粘贴JSON</button>
+                <div class="button-group">
+                    <button class="btn-parse" onclick="document.getElementById('fileInput').click()">📁 上传JSON文件</button>
+                    <button class="btn-clear" onclick="clearAll()">🔄 清空</button>
                 </div>
-
-                <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileUpload(event)">
-
-                <div id="pasteSection" style="display: none;">
-                    <label for="jsonInput">粘贴你的对话JSON：</label>
-                    <textarea id="jsonInput" placeholder="把你导出的JSON数据粘贴到这里..."></textarea>
-                    <div class="button-group">
-                        <button class="btn-parse" onclick="parseChat()">✨ 解析对话</button>
-                    </div>
-                </div>
-
+                <input type="file" id="fileInput" accept=".json" onchange="handleFileUpload(event)">
                 <div id="message"></div>
             </div>
 
@@ -270,11 +265,6 @@
     </div>
 
     <script>
-        function togglePaste() {
-            const pasteSection = document.getElementById('pasteSection');
-            pasteSection.style.display = pasteSection.style.display === 'none' ? 'block' : 'none';
-        }
-
         function handleFileUpload(event) {
             const file = event.target.files[0];
             const messageDiv = document.getElementById('message');
@@ -286,30 +276,30 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     renderOutput(data);
-                    messageDiv.innerHTML = `<div class="success">✓ 文件上传成功！已解析 ${data.messages?.length || 0} 条消息</div>`;
+                    messageDiv.innerHTML = `<div class="success">✓ 文件上传成功！</div>`;
                 } catch (error) {
-                    messageDiv.innerHTML = `<div class="error">❌ 文件格式有问题：${error.message}</div>`;
+                    messageDiv.innerHTML = `<div class="error">❌ JSON格式有问题：${error.message}</div>`;
                 }
             };
             reader.readAsText(file);
         }
 
-        function parseChat() {
-            const input = document.getElementById('jsonInput').value.trim();
-            const messageDiv = document.getElementById('message');
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
 
-            if (!input) {
-                messageDiv.innerHTML = '<div class="error">请先粘贴JSON数据啦～</div>';
-                return;
-            }
-
-            try {
-                const data = JSON.parse(input);
-                renderOutput(data);
-                messageDiv.innerHTML = '<div class="success">✓ 解析成功！</div>';
-            } catch (error) {
-                messageDiv.innerHTML = `<div class="error">❌ JSON格式有问题：${error.message}</div>`;
-            }
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN');
         }
 
         function renderOutput(data) {
@@ -318,29 +308,36 @@
             const statsDiv = document.getElementById('stats');
 
             let conversation = [];
+            let settings = {};
             let memory = [];
-            let userPreferences = '';
 
-            // 处理不同的JSON结构
-            if (data.messages) {
-                conversation = data.messages.map(msg => ({
-                    speaker: msg.role === 'user' ? 'Lune' : 'Claude',
-                    content: msg.content || ''
+            // 提取设置
+            if (data.settings) {
+                settings = data.settings;
+            }
+
+            // 提取对话
+            if (data.history && Array.isArray(data.history)) {
+                conversation = data.history.map(msg => ({
+                    role: msg.role || 'unknown',
+                    senderName: msg.senderName || (msg.role === 'user' ? 'Lune' : msg.role === 'assistant' ? 'Claude' : 'System'),
+                    content: msg.content || '',
+                    timestamp: msg.timestamp,
+                    type: msg.type || 'text',
+                    isHidden: msg.isHidden || false
                 }));
             }
 
-            if (data.memory) {
-                memory = Array.isArray(data.memory) ? data.memory : [];
+            // 提取记忆
+            if (data.longTermMemory && Array.isArray(data.longTermMemory)) {
+                memory = data.longTermMemory;
             }
 
-            if (data.userPreferences) {
-                userPreferences = data.userPreferences;
-            }
-
-            // 统计信息
+            // 计算统计
             const totalMessages = conversation.length;
-            const claudeMessages = conversation.filter(m => m.speaker === 'Claude').length;
-            const luneMessages = conversation.filter(m => m.speaker === 'Lune').length;
+            const claudeMessages = conversation.filter(m => m.senderName === 'Claude' || m.role === 'assistant').length;
+            const luneMessages = conversation.filter(m => m.senderName === 'Lune' || m.role === 'user').length;
+            const systemMessages = conversation.filter(m => m.role === 'system').length;
 
             statsDiv.innerHTML = `
                 <div class="stat-item">
@@ -355,63 +352,70 @@
                     <div class="stat-value">${luneMessages}</div>
                     <div class="stat-label">Lune</div>
                 </div>
+                ${systemMessages > 0 ? `<div class="stat-item">
+                    <div class="stat-value">${systemMessages}</div>
+                    <div class="stat-label">系统消息</div>
+                </div>` : ''}
             `;
 
             // 渲染对话
             let html = '';
 
-            if (userPreferences) {
-                html += `<div style="margin-bottom: 20px; padding: 15px; background: #f0f5ff; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <div style="font-weight: 700; margin-bottom: 10px; color: #333;">🎭 用户预设</div>
-                    <div style="font-size: 13px; color: #666; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(userPreferences)}</div>
-                </div>`;
-            }
-
             if (memory.length > 0) {
-                html += `<div style="margin-bottom: 20px; padding: 15px; background: #f5f0ff; border-radius: 8px; border-left: 4px solid #a855f7;">
-                    <div style="font-weight: 700; margin-bottom: 10px; color: #333;">🧠 记忆</div>
-                    <div style="font-size: 13px; color: #666;">`;
+                html += `<div class="info-box">
+                    <strong>🧠 记忆 (${memory.length}条)</strong><br>`;
                 memory.forEach((mem, i) => {
-                    html += `<div style="margin-bottom: 8px;">• ${escapeHtml(mem)}</div>`;
+                    const content = typeof mem === 'string' ? mem : mem.content || '';
+                    html += `<div style="margin-top: 10px;">• ${escapeHtml(content)}</div>`;
                 });
-                html += `</div></div>`;
+                html += `</div>`;
             }
 
-            html += '<div style="margin-top: 30px;"><div style="font-weight: 700; margin-bottom: 15px; color: #333;">💬 对话</div>';
+            html += '<div class="conversation-section">';
+            html += '<div class="section-title">💬 对话记录</div>';
 
-            conversation.forEach((msg, i) => {
-                const className = msg.speaker === 'Claude' ? 'claude' : 'lune';
-                const emoji = msg.speaker === 'Claude' ? '👨‍💻' : '👤';
-                html += `
-                    <div class="message ${className}">
-                        <div class="message-speaker">${emoji} ${msg.speaker}</div>
-                        <div class="message-content">${escapeHtml(msg.content)}</div>
-                    </div>
-                `;
+            conversation.forEach((entry, idx) => {
+                if (entry.isHidden) return;
+
+                let className = '';
+                let emoji = '';
+                let displayName = '';
+
+                if (entry.role === 'system') {
+                    className = 'system';
+                    emoji = '⚙️';
+                    displayName = '系统';
+                } else if (entry.senderName === 'Claude' || entry.role === 'assistant') {
+                    className = 'claude';
+                    emoji = '👨‍💻';
+                    displayName = 'Claude';
+                } else {
+                    className = 'lune';
+                    emoji = '👤';
+                    displayName = 'Lune';
+                }
+
+                html += `<div class="message ${className}">
+                    <div class="message-speaker">${emoji} ${displayName}</div>
+                    <div class="message-content">${escapeHtml(entry.content)}</div>`;
+
+                if (entry.timestamp) {
+                    html += `<div class="message-time">${formatTime(entry.timestamp)}</div>`;
+                }
+
+                html += `</div>`;
             });
 
             html += '</div>';
+
             output.innerHTML = html;
             outputSection.classList.add('active');
         }
 
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-
         function clearAll() {
-            document.getElementById('jsonInput').value = '';
             document.getElementById('fileInput').value = '';
             document.getElementById('message').innerHTML = '';
             document.getElementById('outputSection').classList.remove('active');
-            document.getElementById('pasteSection').style.display = 'none';
         }
     </script>
 </body>
